@@ -42,6 +42,7 @@ test_normalize_reward=True
 test_seed=0
  
 #Train Test hyperparams
+reward_dieing = -1
 total_steps = 3000000
 num_steps = 256
 num_epochs = 2
@@ -162,7 +163,10 @@ obs = env.reset()
 step = 0
 
 time0 = time.time()
-while step < total_steps:
+time1 = time.time()
+training_time = int(60*60*23.5)
+
+while time0-time1 < training_time:
 
   # Use policy to collect data for "num_steps" steps in the environment. 
   policy.eval()
@@ -183,7 +187,7 @@ while step < total_steps:
     done_idx = [i for i, e in enumerate(done) if e == 1]
     for i in done_idx:
         if int(reward[i]) == 0:
-            reward[i] = -1
+            reward[i] = reward_dieing
     
     # Store data
     storage.store(obs, action, reward, done, info, log_prob, value) #add ", prev_actions, prev_obs" if prev actions are used
@@ -256,7 +260,9 @@ while step < total_steps:
   step_ns.append(step)
   mean_rewards.append(storage.get_reward())
   if step % 1000000 < 10000:
-    torch.save(policy.state_dict, total_path + '.pt')      
+    torch.save(policy.state_dict, total_path + '.pt')  
+    train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards})
+    train_df.to_csv(total_path + '_train.csv')
   
 time1 = time.time()
 total_time = time1-time0
@@ -324,7 +330,7 @@ torch.save(policy.state_dict, total_path + '.pt')
 #   done_idx = [i for i, e in enumerate(done) if e == 1]
 #   for i in done_idx:
 #       if int(reward[i]) == 0:
-#           reward[i] = -1
+#           reward[i] = reward_dieing
 #       if not done_vec[i] > int(n_eval_levels/test_n_envs)-1:    
 #           reward_levels[i,done_vec[i]] = reward[i]
 #           if done_vec[i] > 0:
