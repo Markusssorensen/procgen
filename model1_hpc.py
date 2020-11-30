@@ -246,7 +246,7 @@ while step < total_steps:
   step_ns.append(step)
   mean_rewards.append(storage.get_reward())
   if step % 500000 < 10000:
-    torch.save(policy.state_dict, total_path + '.pt')  
+    torch.save(policy.state_dict(), total_path + '.pt')  
     train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards})
     train_df.to_csv(total_path + '_train.csv')
   
@@ -268,7 +268,7 @@ train_df.to_csv(total_path + '_train.csv')
 # plt.grid(True)
 # plt.savefig(total_path + '.pdf')
 
-torch.save(policy.state_dict, total_path + '.pt')
+torch.save(policy.state_dict(), total_path + '.pt')
 
 # import imageio
 
