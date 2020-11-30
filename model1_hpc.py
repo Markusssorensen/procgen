@@ -146,6 +146,7 @@ storage = BaseStorage(
 
 step_ns = []
 mean_rewards = []
+time_lst = []
 
 # Run training
 obs = env.reset()
@@ -245,16 +246,17 @@ while step < total_steps:
   print(f'Step: {step}\tMean reward: {storage.get_reward()}')
   step_ns.append(step)
   mean_rewards.append(storage.get_reward())
+  time_lst.append(time.time() - time0)
   if step % 500000 < 10000:
     torch.save(policy.state_dict(), total_path + '.pt')  
-    train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards})
+    train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards, 'Time elapsed': time_lst})
     train_df.to_csv(total_path + '_train.csv')
   
 time1 = time.time()
 total_time = time1-time0
 print('Completed training! \nTime used: ' + str(total_time))
 
-train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards})
+train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards, 'Time elapsed': time_lst})
 
 train_df.to_csv(total_path + '_train.csv')
 
