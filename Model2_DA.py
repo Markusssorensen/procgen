@@ -42,7 +42,7 @@ test_normalize_reward=True
 test_seed=0
  
 #Train Test hyperparams
-reward_dieing = -1
+reward_dieing = 0
 total_steps = 5000000
 num_steps = 256
 num_epochs = 2
@@ -55,7 +55,6 @@ entropy_coef = 0.01
 #Policy hyperparams
 in_channels = 3
 feature_dim = 512
-
 
 # ##Imagesplit
 # img_height = 64
@@ -97,8 +96,8 @@ opt_lr = 5e-4
 opt_eps = 1e-5
 
 #Video and weights name
-pathname = 'D:/OneDrive - Danmarks Tekniske Universitet/Studie/5. Semester/Deep Learning/Projekt/'
-dirname = 'model2'
+pathname = 'D:/OneDrive - Danmarks Tekniske Universitet/Studie/5. Semester/Deep Learning/project/'
+dirname = 'model1'
 try:
     os.mkdir(pathname+dirname)
 except:
@@ -174,7 +173,7 @@ while step < total_steps:
   
   for _ in range(num_steps):
     # Use policy
-    obs = data_augmentation(obs)
+    # obs = data_augmentation(obs)
     
     action, log_prob, value = policy.act(obs.cuda()) #add prev_actions.cuda() to act if last actions are used in policy
     
@@ -265,91 +264,91 @@ train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards}
 
 train_df.to_csv(total_path + '_train.csv')
 
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
-# plt.figure()
-# plt.plot(step_ns,mean_rewards)
-# plt.xlabel("Number of steps")
-# plt.ylabel("Average Reward gained")
-# plt.title("CR " + dirname)
-# plt.grid(True)
-# plt.savefig(total_path + '.pdf')
+plt.figure()
+plt.plot(step_ns,mean_rewards)
+plt.xlabel("Number of steps")
+plt.ylabel("Average Reward gained")
+plt.title("CR " + dirname)
+plt.grid(True)
+plt.savefig(total_path + '.pdf')
 
-# torch.save(policy.state_dict, total_path + '.pt')
+torch.save(policy.state_dict, total_path + '.pt')
 
-# import imageio
+import imageio
 
-# # Make evaluation environment
-# eval_env = make_env(n_envs=test_n_envs, 
-#                env_name=test_env_name,
-#                num_levels=test_num_levels,
-#                start_level= test_start_level,
-#                use_backgrounds=test_use_backgrounds,
-#                normalize_obs=test_normalize_obs,
-#                normalize_reward=test_normalize_reward,
-#                seed=test_seed
-#                )
+# Make evaluation environment
+eval_env = make_env(n_envs=test_n_envs, 
+                env_name=test_env_name,
+                num_levels=test_num_levels,
+                start_level= test_start_level,
+                use_backgrounds=test_use_backgrounds,
+                normalize_obs=test_normalize_obs,
+                normalize_reward=test_normalize_reward,
+                seed=test_seed
+                )
 
-# obs = eval_env.reset()
+obs = eval_env.reset()
 
-# frames = []
-# total_reward = []
+frames = []
+total_reward = []
 
-# # Evaluate policy
-# policy.eval()
-# done_vec = torch.tensor([0 for i in range(test_n_envs)])
+# Evaluate policy
+policy.eval()
+done_vec = torch.tensor([0 for i in range(test_n_envs)])
 
-# # test_prev_actions = torch.zeros([test_n_envs,n_action_back, env.action_space.n])
-# # test_prev_actions2 = torch.zeros([test_n_envs,n_action_back, env.action_space.n])
+# test_prev_actions = torch.zeros([test_n_envs,n_action_back, env.action_space.n])
+# test_prev_actions2 = torch.zeros([test_n_envs,n_action_back, env.action_space.n])
 
-# n_steps_levels = np.zeros([test_n_envs, int(n_eval_levels/test_n_envs)])
-# reward_levels = np.zeros([test_n_envs, int(n_eval_levels/test_n_envs)])
+n_steps_levels = np.zeros([test_n_envs, int(n_eval_levels/test_n_envs)])
+reward_levels = np.zeros([test_n_envs, int(n_eval_levels/test_n_envs)])
 
-# n_test_steps = 0
-# while min(done_vec) < int(n_eval_levels/test_n_envs):
+n_test_steps = 0
+while min(done_vec) < int(n_eval_levels/test_n_envs):
   
-#   # Use policy
-#   action, log_prob, value = policy.act(obs.cuda()) #Add , test_prev_actions.cuda() if prev actions are used
+  # Use policy
+  action, log_prob, value = policy.act(obs.cuda()) #Add , test_prev_actions.cuda() if prev actions are used
 
-#   # Take step in environment
-#   obs, reward, done, info = eval_env.step(action)
-#   total_reward.append(torch.Tensor(reward))      
+  # Take step in environment
+  obs, reward, done, info = eval_env.step(action)
+  total_reward.append(torch.Tensor(reward))      
   
-#   if done_vec[0] < int(n_eval_levels/test_n_envs):
-#       # Render environment and store
-#       frame = (torch.Tensor(eval_env.render(mode='rgb_array'))*255.).byte()
-#       frames.append(frame)
+  if done_vec[0] < int(n_eval_levels/test_n_envs):
+      # Render environment and store
+      frame = (torch.Tensor(eval_env.render(mode='rgb_array'))*255.).byte()
+      frames.append(frame)
   
-#   done_idx = [i for i, e in enumerate(done) if e == 1]
-#   for i in done_idx:
-#       if int(reward[i]) == 0:
-#           reward[i] = reward_dieing
-#       if not done_vec[i] > int(n_eval_levels/test_n_envs)-1:    
-#           reward_levels[i,done_vec[i]] = reward[i]
-#           if done_vec[i] > 0:
-#               n_steps_levels[i,done_vec[i]] = n_test_steps - sum(n_steps_levels[i,:done_vec[i]])
-#           else:
-#               n_steps_levels[i,done_vec[i]] = n_test_steps
+  done_idx = [i for i, e in enumerate(done) if e == 1]
+  for i in done_idx:
+      if int(reward[i]) == 0:
+          reward[i] = reward_dieing
+      if not done_vec[i] > int(n_eval_levels/test_n_envs)-1:    
+          reward_levels[i,done_vec[i]] = reward[i]
+          if done_vec[i] > 0:
+              n_steps_levels[i,done_vec[i]] = n_test_steps - sum(n_steps_levels[i,:done_vec[i]])
+          else:
+              n_steps_levels[i,done_vec[i]] = n_test_steps
   
-#   done_vec = done_vec + done
-#   #Update prev_actions
-#   # test_prev_actions2[:,1:,:] = test_prev_actions[:,:n_action_back-1,:]
-#   # test_prev_actions2[:,0,:] = nn.functional.one_hot(action, num_classes=15)
-#   # test_prev_actions = test_prev_actions2
-#   # test_prev_actions[done,:,:] = 0
-#   n_test_steps += 1
+  done_vec = done_vec + done
+  #Update prev_actions
+  # test_prev_actions2[:,1:,:] = test_prev_actions[:,:n_action_back-1,:]
+  # test_prev_actions2[:,0,:] = nn.functional.one_hot(action, num_classes=15)
+  # test_prev_actions = test_prev_actions2
+  # test_prev_actions[done,:,:] = 0
+  n_test_steps += 1
   
-#   if n_test_steps % 1000 == 0:
-#       print(done_vec)
+  if n_test_steps % 1000 == 0:
+      print(done_vec)
 
-# # Calculate average return
-# n_steps_levels = np.reshape(n_steps_levels,(1,n_steps_levels.shape[0]*n_steps_levels.shape[1]))
-# reward_levels = np.reshape(reward_levels,(1,reward_levels.shape[0]*reward_levels.shape[1]))
+# Calculate average return
+n_steps_levels = np.reshape(n_steps_levels,(1,n_steps_levels.shape[0]*n_steps_levels.shape[1]))
+reward_levels = np.reshape(reward_levels,(1,reward_levels.shape[0]*reward_levels.shape[1]))
 
-# eval_df = pd.DataFrame({'Level':range(n_steps_levels.shape[1]), 'N Steps':n_steps_levels[0,:], 'Reward':reward_levels[0,:], 'Training duration (s)':[total_time for i in range(n_steps_levels.shape[1])]})
+eval_df = pd.DataFrame({'Level':range(n_steps_levels.shape[1]), 'N Steps':n_steps_levels[0,:], 'Reward':reward_levels[0,:], 'Training duration (s)':[total_time for i in range(n_steps_levels.shape[1])]})
 
-# eval_df.to_csv(total_path + '_test.csv')
+eval_df.to_csv(total_path + '_test.csv')
 
-# # Save frames as video
-# frames = torch.stack(frames)
-# imageio.mimsave(total_path + '2' + '.mp4', frames, fps=15) 
+# Save frames as video
+frames = torch.stack(frames)
+imageio.mimsave(total_path + '.mp4', frames, fps=15) 
