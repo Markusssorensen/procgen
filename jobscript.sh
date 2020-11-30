@@ -30,4 +30,5 @@ module load cudnn/v7.0-prod-cuda8
 module load ffmpeg/4.2.2
 echo "Running script..."
 cd /zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/
+echo ls
 python3 model1_hpc.py

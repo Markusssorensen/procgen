@@ -93,11 +93,6 @@ opt_eps = 1e-5
 pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
 dirname = "model1"
 
-try:
-    os.mkdir(pathname+dirname)
-except:
-    pass
-
 name = "/CR_" + dirname
 total_path = pathname + dirname + name
 
@@ -132,7 +127,7 @@ policy = policy.cuda()
 # transformer_block_img = TransformerBlock_woa(transformer_attention_img, enc_out_dim_img, transf_dropout1, forward_scaling_img)
 # transformer_attention_seq = MultiHeadAttention(seq_heads, act_out_features)
 # transformer_block_seq = TransformerBlock_woa(transformer_attention_seq, act_out_features, transf_dropout2, forward_scaling_seq).cuda()
-data_augmentation = DataAugmentation(brightness, p_bright, contrast, p_contr, saturation, p_satur, hue, p_hue, augment_prob)
+# data_augmentation = DataAugmentation(brightness, p_bright, contrast, p_contr, saturation, p_satur, hue, p_hue, augment_prob)
 # policy = Policy(image_split, encoder, encoder_actions, pos_encoder_img, pos_encoder_seq, transformer_block_img, transformer_block_seq, vert_splits*hor_splits*enc_out_dim_img, policy_lin, env.action_space.n)
 # policy.cuda()
 
