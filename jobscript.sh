@@ -3,14 +3,14 @@
 ### -- specify queue --
 #BSUB -q gpuv100
 ### -- set the job Name --
-#BSUB -J model2_hpc
+#BSUB -J model1_hpc
 ### -- ask for number of cores (default: 1) --
 #BSUB -n 1
 ### -- Select the resources: 1 gpu in exclusive process mode --
-#BSUB -gpu "num=1:mode=exclusive_process"
+#BSUB -gpu "num=1"
 ### -- set walltime limit: hh:mm --  maximum 24 hours for GPU-queues right now
 #BSUB -W 23:55
-#BSUB -R "rusage[mem=32GB]"
+#BSUB -R "rusage[mem=5GB]"
 #BSUB -u markus.sorensen@live.dk
 ### -- send notification at start --
 #BSUB -B
@@ -29,4 +29,5 @@ module load cuda/8.0
 module load cudnn/v7.0-prod-cuda8
 module load ffmpeg/4.2.2
 echo "Running script..."
+cd /zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/
 python3 model2_hpc.py

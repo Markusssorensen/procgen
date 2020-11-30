@@ -91,7 +91,7 @@ opt_eps = 1e-5
 
 #Video and weights name
 pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
-dirname = "model2"
+dirname = "model1"
 
 try:
     os.mkdir(pathname+dirname)
