@@ -36,7 +36,7 @@ test_seed=0
  
 #Train Test hyperparams
 reward_dieing = 0
-total_steps = 3000000
+total_steps = 1000000
 num_steps = 256
 num_epochs = 2
 batch_size = 256
@@ -157,10 +157,7 @@ obs = env.reset()
 step = 0
 
 time0 = time.time()
-time1 = time.time()
-training_time = int(60*60*23)
-
-while time0-time1 < training_time:
+while step < total_steps:
 
   # Use policy to collect data for "num_steps" steps in the environment. 
   policy.eval()
