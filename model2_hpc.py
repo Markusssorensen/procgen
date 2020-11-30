@@ -13,6 +13,13 @@ import matplotlib.pyplot as plt
 import time
 import os
 
+#Video and weights name
+pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
+dirname = "model2"
+
+name = "/CR_" + dirname
+total_path = pathname + dirname + name
+
 #Env hyperparams
 n_envs=32
 env_name='coinrun'
@@ -88,13 +95,6 @@ augment_prob = 0.85
 #Optimizer hyperparams
 opt_lr = 5e-4
 opt_eps = 1e-5
-
-#Video and weights name
-pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
-dirname = "model2"
-
-name = "/CR_" + dirname
-total_path = pathname + dirname + name
 
 env = make_env(n_envs=n_envs, 
                env_name=env_name,
