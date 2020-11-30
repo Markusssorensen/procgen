@@ -10,7 +10,7 @@
 #BSUB -gpu "num=1"
 ### -- set walltime limit: hh:mm --  maximum 24 hours for GPU-queues right now
 #BSUB -W 23:55
-#BSUB -R "rusage[mem=5GB]"
+#BSUB -R "rusage[mem=16GB]"
 #BSUB -u markus.sorensen@live.dk
 ### -- send notification at start --
 #BSUB -B
