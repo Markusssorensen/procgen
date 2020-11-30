@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Nov 12 21:05:25 2020
-
-@author: Markus
-"""
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -42,7 +35,7 @@ test_normalize_reward=True
 test_seed=0
  
 #Train Test hyperparams
-reward_dieing = -1
+reward_dieing = 0
 total_steps = 3000000
 num_steps = 256
 num_epochs = 2
@@ -97,8 +90,9 @@ opt_lr = 5e-4
 opt_eps = 1e-5
 
 #Video and weights name
-pathname = os.getcwd() + "\\"
+pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
 dirname = "model2"
+
 try:
     os.mkdir(pathname+dirname)
 except:
@@ -164,7 +158,7 @@ step = 0
 
 time0 = time.time()
 time1 = time.time()
-training_time = int(60*60*23.5)
+training_time = int(60*60*23)
 
 while time0-time1 < training_time:
 
@@ -177,7 +171,7 @@ while time0-time1 < training_time:
   
   for _ in range(num_steps):
     # Use policy
-    obs = data_augmentation(obs)
+#    obs = data_augmentation(obs)
     
     action, log_prob, value = policy.act(obs.cuda()) #add prev_actions.cuda() to act if last actions are used in policy
     
