@@ -16,7 +16,7 @@ import os
 #Env hyperparams
 n_envs=32
 env_name='coinrun'
-num_levels=1000
+num_levels=500
 start_level= 0
 use_backgrounds=True
 normalize_obs=False
@@ -98,7 +98,7 @@ try:
 except:
     pass
 
-name = "\\CR_" + dirname
+name = "/CR_" + dirname
 total_path = pathname + dirname + name
 
 env = make_env(n_envs=n_envs, 
