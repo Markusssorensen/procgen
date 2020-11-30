@@ -20,7 +20,7 @@ num_levels=500
 start_level= 0
 use_backgrounds=True
 normalize_obs=False
-normalize_reward=True
+normalize_reward=False
 seed=0
 
 #Test env
@@ -31,12 +31,12 @@ n_eval_levels = 100
 test_start_level= start_level + num_levels + 1
 test_use_backgrounds=True
 test_normalize_obs=False
-test_normalize_reward=True
+test_normalize_reward=False
 test_seed=0
  
 #Train Test hyperparams
 reward_dieing = 0
-total_steps = 1000000
+total_steps = 15000000
 num_steps = 256
 num_epochs = 2
 batch_size = 256
@@ -245,7 +245,7 @@ while step < total_steps:
   print(f'Step: {step}\tMean reward: {storage.get_reward()}')
   step_ns.append(step)
   mean_rewards.append(storage.get_reward())
-  if step % 100000 < 10000:
+  if step % 500000 < 10000:
     torch.save(policy.state_dict, total_path + '.pt')  
     train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards})
     train_df.to_csv(total_path + '_train.csv')
