@@ -16,11 +16,11 @@ import os
 #Env hyperparams
 n_envs=32
 env_name='coinrun'
-num_levels=1000
+num_levels=500
 start_level= 0
 use_backgrounds=True
 normalize_obs=False
-normalize_reward=True
+normalize_reward=False
 seed=0
 
 #Test env
@@ -31,12 +31,12 @@ n_eval_levels = 100
 test_start_level= start_level + num_levels + 1
 test_use_backgrounds=True
 test_normalize_obs=False
-test_normalize_reward=True
+test_normalize_reward=False
 test_seed=0
  
 #Train Test hyperparams
-reward_dieing = 0
-total_steps = 3000000
+reward_dieing = -1
+total_steps = 15000000
 num_steps = 256
 num_epochs = 2
 batch_size = 256
@@ -93,12 +93,7 @@ opt_eps = 1e-5
 pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
 dirname = "model2"
 
-try:
-    os.mkdir(pathname+dirname)
-except:
-    pass
-
-name = "\\CR_" + dirname
+name = "/CR_" + dirname
 total_path = pathname + dirname + name
 
 env = make_env(n_envs=n_envs, 
@@ -132,7 +127,7 @@ policy = policy.cuda()
 # transformer_block_img = TransformerBlock_woa(transformer_attention_img, enc_out_dim_img, transf_dropout1, forward_scaling_img)
 # transformer_attention_seq = MultiHeadAttention(seq_heads, act_out_features)
 # transformer_block_seq = TransformerBlock_woa(transformer_attention_seq, act_out_features, transf_dropout2, forward_scaling_seq).cuda()
-data_augmentation = DataAugmentation(brightness, p_bright, contrast, p_contr, saturation, p_satur, hue, p_hue, augment_prob)
+# data_augmentation = DataAugmentation(brightness, p_bright, contrast, p_contr, saturation, p_satur, hue, p_hue, augment_prob)
 # policy = Policy(image_split, encoder, encoder_actions, pos_encoder_img, pos_encoder_seq, transformer_block_img, transformer_block_seq, vert_splits*hor_splits*enc_out_dim_img, policy_lin, env.action_space.n)
 # policy.cuda()
 
@@ -151,16 +146,14 @@ storage = BaseStorage(
 
 step_ns = []
 mean_rewards = []
+time_lst = []
 
 # Run training
 obs = env.reset()
 step = 0
 
 time0 = time.time()
-time1 = time.time()
-training_time = int(60*60*23)
-
-while time0-time1 < training_time:
+while step < total_steps:
 
   # Use policy to collect data for "num_steps" steps in the environment. 
   policy.eval()
@@ -253,16 +246,17 @@ while time0-time1 < training_time:
   print(f'Step: {step}\tMean reward: {storage.get_reward()}')
   step_ns.append(step)
   mean_rewards.append(storage.get_reward())
-  if step % 1000000 < 10000:
-    torch.save(policy.state_dict, total_path + '.pt')  
-    train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards})
+  time_lst.append(time.time() - time0)
+  if step % 500000 < 10000:
+    torch.save(policy.state_dict(), total_path + '.pt')  
+    train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards, 'Time elapsed': time_lst})
     train_df.to_csv(total_path + '_train.csv')
   
 time1 = time.time()
 total_time = time1-time0
 print('Completed training! \nTime used: ' + str(total_time))
 
-train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards})
+train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards, 'Time elapsed': time_lst})
 
 train_df.to_csv(total_path + '_train.csv')
 
@@ -276,7 +270,7 @@ train_df.to_csv(total_path + '_train.csv')
 # plt.grid(True)
 # plt.savefig(total_path + '.pdf')
 
-torch.save(policy.state_dict, total_path + '.pt')
+torch.save(policy.state_dict(), total_path + '.pt')
 
 # import imageio
 
