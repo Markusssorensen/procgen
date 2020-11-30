@@ -245,7 +245,7 @@ while step < total_steps:
   print(f'Step: {step}\tMean reward: {storage.get_reward()}')
   step_ns.append(step)
   mean_rewards.append(storage.get_reward())
-  if step % 1000000 < 10000:
+  if step % 100000 < 10000:
     torch.save(policy.state_dict, total_path + '.pt')  
     train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards})
     train_df.to_csv(total_path + '_train.csv')
