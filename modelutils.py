@@ -278,7 +278,7 @@ class TransformerBlock(nn.Module):
         out = self.dropout(self.norm2(forward + x))
         return out
     
-class TransformerBlock_woa(nn.Module):
+class TransformerBlock_wo_addition(nn.Module):
     def __init__(self, attention, d_model, dropout, forward_scale):
         super().__init__()
         self.attention = attention
@@ -302,6 +302,45 @@ class TransformerBlock_woa(nn.Module):
         out = self.dropout(self.norm2(forward + x))
         return out
 
+class Policy4(nn.Module):
+  def __init__(self, image_split, encoder, pos_encoder, transformer_block, encoder_out_dim, num_actions):
+    super().__init__()
+    self.image_split = image_split
+    self.encoder = encoder
+    self.pos_encoder = pos_encoder
+    self.transformer_block = transformer_block
+    self.policy = orthogonal_init(nn.Linear(encoder_out_dim, num_actions), gain=.01)
+    self.value = orthogonal_init(nn.Linear(encoder_out_dim, 1), gain=1.)
+
+  def act(self, x):
+    with torch.no_grad():
+      x = x.cuda().contiguous()
+      dist, value = self.forward(x)
+      action = dist.sample()
+      log_prob = dist.log_prob(action)
+    
+    return action.cpu(), log_prob.cpu(), value.cpu()
+
+  def forward(self, x):
+    x = self.image_split(x)
+    
+    n = x.shape[0]
+    splits = x.shape[1]
+    
+    x = torch.reshape(x,(x.shape[0]*x.shape[1],x.shape[2],x.shape[3],x.shape[4]))
+    x = self.encoder(x)
+    x = torch.reshape(x,(n,splits,x.shape[1]))
+    x = self.pos_encoder(x)
+    
+    x = self.transformer_block(x,x,x)
+    
+    x = x.view(x.size(0), -1)
+    
+    logits = self.policy(x)
+    value = self.value(x).squeeze(1)
+    dist = torch.distributions.Categorical(logits=logits)
+
+    return dist, value
 
 class Policy(nn.Module):
   def __init__(self, image_split, encoder, action_encoder, pos_encoder_img, pos_encoder_seq, transformer_block_img, transformer_block_seq, encoder_out_dim_img, encoder_out_dim_seq, num_actions):
