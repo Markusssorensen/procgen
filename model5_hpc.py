@@ -14,8 +14,8 @@ import time
 import os
 
 #Video and weights name
-pathname = 'D:/OneDrive - Danmarks Tekniske Universitet/Studie/5. Semester/Deep Learning/project/'
-# pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
+# pathname = 'D:/OneDrive - Danmarks Tekniske Universitet/Studie/5. Semester/Deep Learning/project/'
+pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
 dirname = "model5"
 
 name = "/CR_" + dirname
