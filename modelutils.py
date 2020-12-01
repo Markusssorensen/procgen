@@ -342,7 +342,7 @@ class Policy4(nn.Module):
 
     return dist, value
 
-class Policy(nn.Module):
+class Policy5(nn.Module):
   def __init__(self, image_split, encoder, action_encoder, pos_encoder_img, pos_encoder_seq, transformer_block_img, transformer_block_seq, encoder_out_dim_img, encoder_out_dim_seq, num_actions):
     super().__init__()
     self.image_split = image_split
