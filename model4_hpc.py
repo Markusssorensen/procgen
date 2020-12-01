@@ -19,11 +19,11 @@ import os
 
 # name = "/CR_" + dirname
 # total_path = pathname + dirname + name
-# pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
-# dirname = "model4"
+pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
+dirname = "model4"
 
-# name = "/CR_" + dirname
-# total_path = pathname + dirname + name
+name = "/CR_" + dirname
+total_path = pathname + dirname + name
 
 #Env hyperparams
 n_envs=32
