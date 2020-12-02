@@ -35,7 +35,7 @@ seed=0
 test_n_envs=25
 test_env_name='coinrun'
 test_num_levels=50
-n_eval_levels = 100
+n_eval_levels = 1000
 test_start_level= start_level + num_levels + 1
 test_use_backgrounds=True
 test_normalize_obs=False
@@ -68,10 +68,11 @@ img_inp_layers = 3
 enc_out_dim_img = 128
 ##Action Encoder
 act_in_features = 15
-act_l1_features = 128
-act_l2_features = 128
-act_out_features = 32
-n_action_back = 5
+act_l1_features = 64
+act_l2_features = 32
+act_out_features = 16
+n_action_back = 10
+action_mask = torch.tril(torch.ones(n_action_back,n_action_back))
 ##Transformer Image
 img_heads = 4
 forward_scaling_img = 4
@@ -165,7 +166,7 @@ while step < total_steps:
     # Use policy
 #    obs = data_augmentation(obs)
     
-    action, log_prob, value = policy.act(obs.cuda(),prev_actions.cuda()) #add prev_actions.cuda() to act if last actions are used in policy
+    action, log_prob, value = policy.act(obs.cuda(),prev_actions.cuda(),action_mask.cuda()) #add prev_actions.cuda() to act if last actions are used in policy
     
     # Take step in environment
     next_obs, reward, done, info = env.step(action)
@@ -194,7 +195,7 @@ while step < total_steps:
     
 
   # Add the last observation to collected data
-  _, _, value = policy.act(obs.cuda(),prev_actions.cuda()) # add prev_actions.cuda() if prev actions are used
+  _, _, value = policy.act(obs.cuda(),prev_actions.cuda(),action_mask.cuda()) # add prev_actions.cuda() if prev actions are used
   storage.store_last(obs, value)
 
   # Compute return and advantage
@@ -211,7 +212,7 @@ while step < total_steps:
       b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage, b_prev_actions = batch # add b_prev_actions if used
 
       # Get current policy outputs
-      new_dist, new_value = policy(b_obs, b_prev_actions) # add b_prev_actions if prev actions are used
+      new_dist, new_value = policy(b_obs, b_prev_actions, action_mask.cuda()) # add b_prev_actions if prev actions are used
       new_log_prob = new_dist.log_prob(b_action)
 
       # Clipped policy objective
@@ -247,9 +248,9 @@ while step < total_steps:
   mean_rewards.append(storage.get_reward())
   time_lst.append(time.time() - time0)
   if step % 500000 < 10000:
-    torch.save(policy.state_dict(), total_path + '.pt')  
-    train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards, 'Time elapsed': time_lst})
-    train_df.to_csv(total_path + '_train.csv')
+      torch.save(policy.state_dict(), total_path + '.pt')  
+      train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards, 'Time elapsed': time_lst})
+      train_df.to_csv(total_path + '_train.csv')
   
 time1 = time.time()
 total_time = time1-time0
