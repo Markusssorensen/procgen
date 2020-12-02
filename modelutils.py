@@ -356,16 +356,16 @@ class Policy5(nn.Module):
     self.policy = orthogonal_init(nn.Linear(int(encoder_out_dim_seq/2), num_actions), gain=.01)
     self.value = orthogonal_init(nn.Linear(int(encoder_out_dim_seq/2), 1), gain=1.)
 
-  def act(self, x, actions):
+  def act(self, x, actions, action_mask = None):
     with torch.no_grad():
       x = x.cuda().contiguous()
-      dist, value = self.forward(x, actions)
+      dist, value = self.forward(x, actions, action_mask)
       action = dist.sample()
       log_prob = dist.log_prob(action)
     
     return action.cpu(), log_prob.cpu(), value.cpu()
 
-  def forward(self, x, actions):
+  def forward(self, x, actions, action_mask = None):
     x = self.image_split(x)
     
     n = x.shape[0]
@@ -388,7 +388,7 @@ class Policy5(nn.Module):
     act = torch.reshape(act,(n_act,act_back,act.shape[1]))
     act = self.pos_encoder_seq(act)
     
-    act = self.transformer_block_seq(act,act,act)
+    act = self.transformer_block_seq(act,act,act, action_mask)
     
     act = act.view(act.size(0), -1)
     
