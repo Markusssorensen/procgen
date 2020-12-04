@@ -46,7 +46,7 @@ class ImageSplit(nn.Module):
             
         for i in range(self.vertical_splits):
             for j in range(self.horizontal_splits):
-                self.image_split.append(x[:,:,i*self.split_length:(i+1)*self.split_length,j*self.split_height:(j+1)*self.split_height])
+                self.image_split.append(x[:,:,i*self.split_height:(i+1)*self.split_height,j*self.split_length:(j+1)*self.split_length])
         
         return torch.stack(self.image_split,1)
 
@@ -73,6 +73,20 @@ class Encoder2(nn.Module):
         nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1), nn.ReLU(),
         Flatten(),
         nn.Linear(in_features=576, out_features=encoder_out_dim), nn.ReLU()
+    )
+    self.apply(orthogonal_init)
+
+  def forward(self, x):
+    return self.layers(x)
+
+class Encoder3(nn.Module):
+  def __init__(self, in_channels, encoder_out_dim):
+    super().__init__()
+    self.layers = nn.Sequential(
+        nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=3, stride=2), nn.ReLU(),
+        nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1), nn.ReLU(),
+        Flatten(),
+        nn.Linear(in_features=320, out_features=encoder_out_dim), nn.ReLU()
     )
     self.apply(orthogonal_init)
 
