@@ -53,34 +53,15 @@ grad_eps = .5
 value_coef = .5
 entropy_coef = 0.01
 
-##Imagesplit
-img_height = 64
-img_width = img_height
-vert_splits = 4
-hor_splits = vert_splits
-##Image Encoder
-img_inp_layers = 3
-enc_out_dim_img = 128
-##Action Encoder
-#act_in_features = 15
-#act_l1_features = 64
-#act_l2_features = 32
-#act_out_features = 16
-#n_action_back = 10
-#action_mask = torch.tril(torch.ones(n_action_back,n_action_back))
-## Observations back
+##Policy hyperparams
+enc_inp_layers = 3
+enc_out_dim = 512
 n_obs_back = 5
-obs_mask = torch.tril(torch.ones(n_obs_back,n_obs_back))
-obs_out_features = 1028
-##Transformer Image
-img_heads = 4
-forward_scaling_img = 4
-transf_dropout1 = 0.1
-##Transformer Action
-obs_heads = 4
-transf_dropout2 = 0.1
-forward_scaling_obs = 4
-policy_lin = enc_out_dim_img*vert_splits*hor_splits + enc_out_dim_img*vert_splits*hor_splits*n_obs_back
+n_heads = 4
+transformer_dropout = 0.1
+transformer_forward_scale = 4
+transformer_out_dim = (1+n_obs_back)*enc_out_dim
+obs_mask = torch.triu(torch.ones(n_obs_back+1,n_obs_back+1)).cuda()
 
 ## Augmentation params
 brightness = 0.5
@@ -111,59 +92,44 @@ print('Observation space:', env.observation_space)
 print('Action space:', env.action_space.n)
 
 class Policy6(nn.Module):
-  def __init__(self, encoder, pos_encoder_img, transformer_block_obs, encoder_out_dim, num_actions):
+  def __init__(self, encoder, pos_encoder_obs, transformer_block_obs, transformer_out_dim , num_actions):
     super().__init__()
     self.encoder = encoder
     self.pos_encoder_obs = pos_encoder_obs
     self.transformer_block_obs = transformer_block_obs
-    self.linear = orthogonal_init(nn.Linear(encoder_out_dim_seq, int(encoder_out_dim_seq/2)), gain=.01)
-    self.policy = orthogonal_init(nn.Linear(int(encoder_out_dim_seq/2), num_actions), gain=.01)
-    self.value = orthogonal_init(nn.Linear(int(encoder_out_dim_seq/2), 1), gain=1.)
+    self.linear1 = orthogonal_init(nn.Linear(transformer_out_dim, int(transformer_out_dim/2)), gain=.01)
+    self.linear2 = orthogonal_init(nn.Linear(int(transformer_out_dim/2), int(transformer_out_dim/4)), gain=.01)
+    self.policy = orthogonal_init(nn.Linear(int(transformer_out_dim/4), num_actions), gain=.01)
+    self.value = orthogonal_init(nn.Linear(int(transformer_out_dim/4), 1), gain=1.)
 
-  def act(self, x, actions, action_mask = None):
+  def act(self, x, obs_back, obs_mask = None):
     with torch.no_grad():
       x = x.cuda().contiguous()
-      dist, value = self.forward(x, actions, action_mask)
+      dist, value = self.forward(x, obs_back, obs_mask)
       action = dist.sample()
       log_prob = dist.log_prob(action)
     
     return action.cpu(), log_prob.cpu(), value.cpu()
 
   def forward(self, x, obs_back, obs_mask = None):
+    all_obs = list()
     x = self.encoder(x)
-    encoded_obs_back = []
+    all_obs.append(x)
+    obs_back = torch.transpose(obs_back,0,1)
+    for i in obs_back:
+        i = encoder(i)
+        all_obs.append(i)
     
-    for obs_seq in obs_back
-    obs_back = torch.reshape
+    x = torch.stack(all_obs,1)
 
+    x = self.pos_encoder_obs(x)
     
-    n = x.shape[0]
-    splits = x.shape[1]
-    
-    x = torch.reshape(x,(x.shape[0]*x.shape[1],x.shape[2],x.shape[3],x.shape[4]))
-    x = self.encoder(x)
-    x = torch.reshape(x,(n,splits,x.shape[1]))
-    x = self.pos_encoder_img(x)
-    
-    x = self.transformer_block_img(x,x,x)
+    x = self.transformer_block_obs(x,x,x,obs_mask)
     
     x = x.view(x.size(0), -1)
     
-    n_act = actions.shape[0]
-    act_back = actions.shape[1]
-    
-    act = torch.reshape(actions, (actions.shape[0]*actions.shape[1],actions.shape[2]))
-    act = self.action_encoder(act)
-    act = torch.reshape(act,(n_act,act_back,act.shape[1]))
-    act = self.pos_encoder_seq(act)
-    
-    act = self.transformer_block_seq(act,act,act, action_mask)
-    
-    act = act.view(act.size(0), -1)
-    
-    x = torch.cat([x,act],dim=1)
-    
-    x = F.relu(self.linear(x))
+    x = F.relu(self.linear1(x))
+    x = F.relu(self.linear2(x))
     
     logits = F.softmax(self.policy(x),dim=1)
     value = self.value(x).squeeze(1)
@@ -175,18 +141,12 @@ class Policy6(nn.Module):
 # Define environment
 # check the utils.py file for info on arguments
 
-image_split = ImageSplit(img_height, img_width, vert_splits, hor_splits)
-encoder = Encoder2(img_inp_layers,enc_out_dim_img)
-pos_encoder_img = PositionalEncoder(enc_out_dim_img,hor_splits*vert_splits)
-transformer_attention_img = MultiHeadAttention(img_heads, enc_out_dim_img)
-transformer_block_img = TransformerBlock(transformer_attention_img, enc_out_dim_img, transf_dropout1, forward_scaling_img)
-data_augmentation = DataAugmentation(brightness, p_bright, contrast, p_contr, saturation, p_satur, hue, p_hue, augment_prob)
-encoder_obs = Encoder2(img_inp_layers,enc_out_dim_img)
-pos_encoder_obs = PositionalEncoder(enc_out_dim_img,hor_splits*vert_splits)
-transformer_attention_obs = MultiHeadAttention(obs_heads, obs_out_features)
-transformer_block_obs = TransformerBlock(transformer_attention_obs, obs_out_features, transf_dropout2, forward_scaling_obs).cuda()
-policy = Policy6(image_split, encoder, encoder_obs, pos_encoder_img, pos_encoder_obs, transformer_block_img, transformer_block_obs, vert_splits*hor_splits*enc_out_dim_img, policy_lin, env.action_space.n)
-policy.cuda()
+encoder = BaselineEncoder(enc_inp_layers,enc_out_dim).cuda()
+pos_encoder = PositionalEncoder(enc_out_dim,n_obs_back+1).cuda()
+attention_obs = MultiHeadAttention(n_heads,enc_out_dim).cuda()
+transformer_obs = TransformerBlock(attention_obs,enc_out_dim,transformer_dropout,transformer_forward_scale).cuda()
+policy = Policy6(encoder, pos_encoder, transformer_obs, transformer_out_dim, env.action_space.n)
+policy = policy.cuda()
 
 # Define optimizer
 # these are reasonable values but probably not optimal
@@ -226,7 +186,7 @@ while step < total_steps:
     # Use policy
 #    obs = data_augmentation(obs)
     
-    action, log_prob, value = policy.act(obs.cuda(),prev_actions.cuda(),action_mask.cuda()) #add prev_actions.cuda() to act if last actions are used in policy
+    action, log_prob, value = policy.act(obs.cuda(),prev_obs.cuda(),obs_mask.cuda()) #add prev_actions.cuda() to act if last actions are used in policy
     
     # Take step in environment
     next_obs, reward, done, info = env.step(action)
@@ -255,7 +215,7 @@ while step < total_steps:
     
 
   # Add the last observation to collected data
-  _, _, value = policy.act(obs.cuda(),prev_actions.cuda(),action_mask.cuda()) # add prev_actions.cuda() if prev actions are used
+  _, _, value = policy.act(obs.cuda(),prev_obs.cuda(),obs_mask.cuda()) # add prev_actions.cuda() if prev actions are used
   storage.store_last(obs, value)
 
   # Compute return and advantage
@@ -269,10 +229,10 @@ while step < total_steps:
     # Iterate over batches of transitions
     generator = storage.get_generator(batch_size)
     for batch in generator:
-      b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage, b_prev_actions = batch # add b_prev_actions if used
+      b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage, b_prev_obs = batch # add b_prev_actions if used
 
       # Get current policy outputs
-      new_dist, new_value = policy(b_obs, b_prev_actions, action_mask.cuda()) # add b_prev_actions if prev actions are used
+      new_dist, new_value = policy(b_obs, b_prev_obs, obs_mask.cuda()) # add b_prev_actions if prev actions are used
       new_log_prob = new_dist.log_prob(b_action)
 
       # Clipped policy objective
