@@ -58,6 +58,82 @@ def make_env(
 	
 	return env
 
+class BaseStorage2():
+    def __init__(self, obs_shape, num_steps, num_envs, gamma=0.99, lmbda=0.95, normalize_advantage=True):
+        self.obs_shape = obs_shape
+        self.num_steps = num_steps
+        self.num_envs = num_envs
+        self.gamma = gamma
+        self.lmbda = lmbda
+        self.normalize_advantage = normalize_advantage
+        self.reset()
+
+    def reset(self):
+        self.obs = list()
+        self.action = list()
+        self.reward = list()
+        self.done = list()
+        self.log_prob = list()
+        self.value = list()
+        self.returns = list()
+        self.advantage = list()
+        self.info = list()
+        self.step = 0
+
+    def store(self, obs, action, reward, done, info, log_prob, value):
+        self.obs.append(obs.clone())
+        self.action.append(action.clone())
+        self.reward.append(torch.from_numpy(reward.copy()))
+        self.done.append(torch.from_numpy(done.copy()))
+        self.info.append(info)
+        self.log_prob.append(log_prob.clone())
+        self.value.append(value.clone())
+        
+    def store_last(self, obs, value):
+        self.obs.append(obs.clone())
+        self.value.append(value.clone())
+        self.obs = torch.stack(self.obs,dim=0)
+        self.action = torch.stack(self.action,dim=0)
+        self.reward = torch.stack(self.reward,dim=0)
+        self.done = torch.stack(self.done,dim=0)
+        self.log_prob = torch.stack(self.log_prob,dim=0)
+        self.value = torch.stack(self.value,dim=0)
+        self.advantage = torch.zeros(self.num_steps, self.num_envs)
+
+    def compute_return_advantage(self):
+        advantage = 0
+        for i in reversed(range(self.num_steps)):
+            delta = (self.reward[i] + self.gamma * self.value[i+1] * (torch.logical_not(self.done[i]))) - self.value[i]
+            advantage = self.gamma * self.lmbda * advantage * (torch.logical_not(self.done[i])) + delta
+            self.advantage[i] = advantage
+
+        self.returns = self.advantage + self.value[:-1]
+        if self.normalize_advantage:
+            self.advantage = (self.advantage - self.advantage.mean()) / (self.advantage.std() + 1e-9)
+
+    def get_generator(self, batch_size=1024):
+        iterator = BatchSampler(SubsetRandomSampler(range(self.num_steps*self.num_envs)), batch_size, drop_last=True)
+        for indices in iterator:
+            obs = self.obs[:-1].reshape(-1, *self.obs_shape)[indices].cuda()
+            action = self.action.reshape(-1)[indices].cuda()
+            log_prob = self.log_prob.reshape(-1)[indices].cuda()
+            value = self.value[:-1].reshape(-1)[indices].cuda()
+            returns = self.returns.reshape(-1)[indices].cuda()
+            advantage = self.advantage.reshape(-1)[indices].cuda()
+            yield obs, action, log_prob, value, returns, advantage
+
+    def get_reward(self, normalized_reward=True):
+        if normalized_reward:
+            reward = []
+            for step in range(self.num_steps):
+                info = self.info[step]
+                reward.append([d['reward'] for d in info])
+            reward = torch.Tensor(reward)
+        else:
+            reward = self.reward
+		
+        return reward.mean(1).sum(0)
+
 class BaseStorage():
 	def __init__(self, obs_shape, num_steps, num_envs, gamma=0.99, lmbda=0.95, normalize_advantage=True):
 		self.obs_shape = obs_shape
