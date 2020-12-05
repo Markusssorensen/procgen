@@ -99,10 +99,12 @@ class Policy6(nn.Module):
     self.encoder = encoder
     self.pos_encoder_obs = pos_encoder_obs
     self.transformer_block_obs = transformer_block_obs
-    self.linear1 = orthogonal_init(nn.Linear(transformer_out_dim, int(transformer_out_dim/2)), gain=.01)
-    self.linear2 = orthogonal_init(nn.Linear(int(transformer_out_dim/2), int(transformer_out_dim/4)), gain=.01)
-    self.policy = orthogonal_init(nn.Linear(int(transformer_out_dim/4), num_actions), gain=.01)
-    self.value = orthogonal_init(nn.Linear(int(transformer_out_dim/4), 1), gain=1.)
+    # self.linear1 = orthogonal_init(nn.Linear(transformer_out_dim, int(transformer_out_dim/2)), gain=.01)
+    # self.linear2 = orthogonal_init(nn.Linear(int(transformer_out_dim/2), int(transformer_out_dim/4)), gain=.01)
+    # self.policy = orthogonal_init(nn.Linear(int(transformer_out_dim/4), num_actions), gain=.01)
+    # self.value = orthogonal_init(nn.Linear(int(transformer_out_dim/4), 1), gain=1.)
+    self.policy = orthogonal_init(nn.Linear(int(transformer_out_dim), num_actions), gain=.01)
+    self.value = orthogonal_init(nn.Linear(int(transformer_out_dim), 1), gain=1.)
 
   def act(self, x, obs_back, obs_mask = None):
     with torch.no_grad():
@@ -130,8 +132,8 @@ class Policy6(nn.Module):
     
     x = x.view(x.size(0), -1)
     
-    x = F.relu(self.linear1(x))
-    x = F.relu(self.linear2(x))
+    # x = F.relu(self.linear1(x))
+    # x = F.relu(self.linear2(x))
     
     logits = F.softmax(self.policy(x),dim=1)
     value = self.value(x).squeeze(1)
@@ -186,7 +188,7 @@ while step < total_steps:
   
   for _ in range(num_steps):
     # Use policy
-#    obs = data_augmentation(obs)
+    obs = data_augmentation(obs)
     
     action, log_prob, value = policy.act(obs.cuda(),prev_obs.cuda(),obs_mask.cuda()) #add prev_actions.cuda() to act if last actions are used in policy
     
