@@ -45,6 +45,7 @@ test_seed=0
 #Train Test hyperparams
 reward_dieing = -1
 total_steps = 15000000
+num_total_dones = 10*n_envs
 num_steps = 256
 num_epochs = 2
 batch_size = 256
