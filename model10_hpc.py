@@ -110,16 +110,12 @@ env = make_env(n_envs=n_envs,
 print('Observation space:', env.observation_space)
 print('Action space:', env.action_space.n)
 
-class Policy5(nn.Module):
-  def __init__(self, image_split, encoder, pos_encoder_img, transformer_block_img, transformer_block_seq, encoder_out_dim_img, encoder_out_dim_seq, num_actions):
+class Policy6(nn.Module):
+  def __init__(self, encoder, pos_encoder_img, transformer_block_obs, encoder_out_dim, num_actions):
     super().__init__()
-    self.image_split = image_split
     self.encoder = encoder
-    self.action_encoder = encoder
-    self.pos_encoder_img = pos_encoder_img
-    self.pos_encoder_seq = pos_encoder_img
-    self.transformer_block_img = transformer_block_img
-    self.transformer_block_seq = transformer_block_seq
+    self.pos_encoder_obs = pos_encoder_obs
+    self.transformer_block_obs = transformer_block_obs
     self.linear = orthogonal_init(nn.Linear(encoder_out_dim_seq, int(encoder_out_dim_seq/2)), gain=.01)
     self.policy = orthogonal_init(nn.Linear(int(encoder_out_dim_seq/2), num_actions), gain=.01)
     self.value = orthogonal_init(nn.Linear(int(encoder_out_dim_seq/2), 1), gain=1.)
@@ -133,8 +129,13 @@ class Policy5(nn.Module):
     
     return action.cpu(), log_prob.cpu(), value.cpu()
 
-  def forward(self, x, actions, action_mask = None):
-    x = self.image_split(x)
+  def forward(self, x, obs_back, obs_mask = None):
+    x = self.encoder(x)
+    encoded_obs_back = []
+    
+    for obs_seq in obs_back
+    obs_back = torch.reshape
+
     
     n = x.shape[0]
     splits = x.shape[1]
