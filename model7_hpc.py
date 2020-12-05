@@ -14,8 +14,8 @@ import time
 import os
 
 #Video and weights name
-# pathname = 'D:/OneDrive - Danmarks Tekniske Universitet/Studie/5. Semester/Deep Learning/project/'
-pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
+pathname = 'D:/OneDrive - Danmarks Tekniske Universitet/Studie/5. Semester/Deep Learning/project/'
+# pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
 dirname = "model7"
 
 name = "/CR_" + dirname
@@ -68,11 +68,11 @@ img_inp_layers = 3
 enc_out_dim_img = 128
 ##Action Encoder
 act_in_features = 15
-act_l1_features = 64
-act_l2_features = 32
-act_out_features = 16
-n_action_back = 10
-action_mask = torch.tril(torch.ones(n_action_back,n_action_back))
+act_l1_features = 32
+act_l2_features = 64
+act_out_features = 10
+n_action_back = 15
+action_mask = torch.triu(torch.ones(n_action_back,n_action_back))
 ##Transformer Image
 img_heads = 4
 forward_scaling_img = 4
@@ -124,7 +124,7 @@ data_augmentation = DataAugmentation(brightness, p_bright, contrast, p_contr, sa
 encoder_actions = ActionEncoder(act_in_features, act_l1_features, act_l2_features, act_out_features)
 pos_encoder_seq = PositionalEncoder(act_out_features,n_action_back)
 transformer_attention_seq = MultiHeadAttention(seq_heads, act_out_features)
-transformer_block_seq = TransformerBlock(transformer_attention_seq, act_out_features, transf_dropout2, forward_scaling_seq).cuda()
+transformer_block_seq = TransformerBlock_wo_addition(transformer_attention_seq, act_out_features, transf_dropout2, forward_scaling_seq).cuda()
 policy = Policy5(image_split, encoder, encoder_actions, pos_encoder_img, pos_encoder_seq, transformer_block_img, transformer_block_seq, vert_splits*hor_splits*enc_out_dim_img, policy_lin, env.action_space.n)
 policy.cuda()
 
