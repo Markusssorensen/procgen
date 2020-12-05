@@ -54,6 +54,8 @@ value_coef = .5
 entropy_coef = 0.01
 
 ##Policy hyperparams
+img_height = 64
+img_width = 64
 enc_inp_layers = 3
 enc_out_dim = 512
 n_obs_back = 5

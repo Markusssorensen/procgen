@@ -266,8 +266,8 @@ class Storage():
             value = self.value[:-1].reshape(-1)[indices].cuda()
             returns = self.returns.reshape(-1)[indices].cuda()
             advantage = self.advantage.reshape(-1)[indices].cuda()
-            prev_actions = self.prev_actions.reshape(-1, self.actions_back,self.n_actionsspace)[indices].cuda()
-            yield obs, action, log_prob, value, returns, advantage, prev_actions
+            prev_obs = self.prev_obs.reshape(-1,self.actions_back, *self.obs_shape)[indices].cuda()
+            yield obs, action, log_prob, value, returns, advantage, prev_obs
 
     def get_reward(self, normalized_reward=True):
         if normalized_reward:
