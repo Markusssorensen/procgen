@@ -152,6 +152,8 @@ transformer_obs = TransformerBlock(attention_obs,enc_out_dim,transformer_dropout
 policy = Policy6(encoder, pos_encoder, transformer_obs, transformer_out_dim, env.action_space.n)
 policy = policy.cuda()
 
+data_augmentation = DataAugmentation(brightness, p_bright, contrast, p_contr, saturation, p_satur, hue, p_hue, augment_prob)
+
 # Define optimizer
 # these are reasonable values but probably not optimal
 optimizer = torch.optim.Adam(policy.parameters(), lr=opt_lr, eps=opt_eps)
