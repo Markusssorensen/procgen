@@ -14,8 +14,8 @@ import time
 import os
 
 #Video and weights name
-# pathname = 'D:/OneDrive - Danmarks Tekniske Universitet/Studie/5. Semester/Deep Learning/project/'
-pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
+pathname = 'D:/OneDrive - Danmarks Tekniske Universitet/Studie/5. Semester/Deep Learning/project/'
+# pathname = "/zhome/69/1/137385/Desktop/DeepLearning/ProjectWork/procgen/"
 dirname = "model8"
 
 name = "/CR_" + dirname
@@ -144,6 +144,7 @@ time_lst = []
 
 # Run training
 obs = env.reset()
+next_obs = obs
 step = 0
 
 time0 = time.time()
@@ -155,6 +156,8 @@ while step < total_steps:
   # prev_actions2 = torch.zeros([n_envs,n_action_back, env.action_space.n])
   # prev_obs = torch.zeros([n_envs,n_action_back, 3, img_height, img_width])
   # prev_obs2 = torch.zeros([n_envs,n_action_back, 3, img_height, img_width])
+  
+  obs = next_obs
   
   for _ in range(num_steps):
     # Use policy
