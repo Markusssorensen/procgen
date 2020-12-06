@@ -318,7 +318,7 @@ while step < total_steps:
                                 [np.mean(n_steps_levels[0,:])],
                                 [np.mean([n_steps_levels[0,i] for i in range(n_steps_levels[0,:].shape[0]) if (reward_levels[0,i] == 10)])],
                                 [np.mean([n_steps_levels[0,i] for i in range(n_steps_levels[0,:].shape[0]) if (reward_levels[0,i] != 10)])]
-                                ])
+                                ]
         
         eval_df2.to_csv(total_path + '_test_stats2.csv')
 
