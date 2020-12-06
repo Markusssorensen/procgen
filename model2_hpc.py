@@ -143,6 +143,8 @@ storage = BaseStorage(
     n_envs
 )
 
+eval_df2 = pd.DataFrame(columns=['Model', 'Training Steps', 'Levels Complete', 'Levels Dieing','Levels Incomplete', 'Avg Steps Used','Avg Steps - Completed Lvls','Avg Steps - Incompleted Lvls'])
+
 
 step_ns = []
 mean_rewards = []
@@ -251,7 +253,75 @@ while step < total_steps:
     torch.save(policy.state_dict(), total_path + '.pt')  
     train_df = pd.DataFrame({'Training Steps': step_ns, 'Mean Reward': mean_rewards, 'Time elapsed': time_lst})
     train_df.to_csv(total_path + '_train.csv')
-  
+    
+    # # Make evaluation environment
+    if mean_rewards[-1] > 15:
+        eval_env = make_env(n_envs=test_n_envs, 
+                          env_name=test_env_name,
+                          num_levels=test_num_levels,
+                          start_level= test_start_level,
+                          use_backgrounds=test_use_backgrounds,
+                          normalize_obs=test_normalize_obs,
+                          normalize_reward=test_normalize_reward,
+                          seed=test_seed
+                          )
+        obs = eval_env.reset()
+          
+        frames = []
+        total_reward = []
+        
+        # Evaluate policy
+        policy.eval()
+        done_vec = torch.tensor([0 for i in range(test_n_envs)])
+        
+        # test_prev_actions = torch.zeros([test_n_envs,n_action_back, env.action_space.n])
+        # test_prev_actions2 = torch.zeros([test_n_envs,n_action_back, env.action_space.n])
+        
+        n_steps_levels = np.zeros([test_n_envs, int(n_eval_levels/test_n_envs)])
+        reward_levels = np.zeros([test_n_envs, int(n_eval_levels/test_n_envs)])
+        
+        n_test_steps = 0
+        while min(done_vec) < int(n_eval_levels/test_n_envs):
+          
+          # Use policy
+          action, log_prob, value = policy.act(obs.cuda()) #Add , test_prev_actions.cuda() if prev actions are used
+        
+          # Take step in environment
+          obs, reward, done, info = eval_env.step(action)
+          total_reward.append(torch.Tensor(reward))      
+          
+          done_idx = [i for i, e in enumerate(done) if e == 1]
+          for i in done_idx:
+              if int(reward[i]) == 0:
+                  reward[i] = reward_dieing
+              if not done_vec[i] > int(n_eval_levels/test_n_envs)-1:    
+                  reward_levels[i,done_vec[i]] = reward[i]
+                  if done_vec[i] > 0:
+                      n_steps_levels[i,done_vec[i]] = n_test_steps - sum(n_steps_levels[i,:done_vec[i]])
+                  else:
+                      n_steps_levels[i,done_vec[i]] = n_test_steps
+          
+          done_vec = done_vec + done
+          #Update prev_actions
+          # test_prev_actions2[:,1:,:] = test_prev_actions[:,:n_action_back-1,:]
+          # test_prev_actions2[:,0,:] = nn.functional.one_hot(action, num_classes=15)
+          # test_prev_actions = test_prev_actions2
+          # test_prev_actions[done,:,:] = 0
+          n_test_steps += 1
+        
+        # Calculate average return
+        n_steps_levels = np.reshape(n_steps_levels,(1,n_steps_levels.shape[0]*n_steps_levels.shape[1]))
+        reward_levels = np.reshape(reward_levels,(1,reward_levels.shape[0]*reward_levels.shape[1]))
+        
+        eval_df2.loc[len(eval_df2)] = [[dirname], [step],[sum(reward_levels[0,:] == 10)],[sum(np.logical_and(reward_levels[0,:] != 10, n_steps_levels[0,:] < 999))],
+                                [sum(np.logical_and(reward_levels[0,:] != 10, n_steps_levels[0,:] >= 999))],
+                                [np.mean(n_steps_levels[0,:])],
+                                [np.mean([n_steps_levels[0,i] for i in range(n_steps_levels[0,:].shape[0]) if (reward_levels[0,i] == 10)])],
+                                [np.mean([n_steps_levels[0,i] for i in range(n_steps_levels[0,:].shape[0]) if (reward_levels[0,i] != 10)])]
+                                ])
+        
+        eval_df2.to_csv(total_path + '_test_stats2.csv')
+
 time1 = time.time()
 total_time = time1-time0
 print('Completed training! \nTime used: ' + str(total_time))
