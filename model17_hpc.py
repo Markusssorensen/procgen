@@ -62,7 +62,7 @@ n_obs_back = 5
 n_heads = 4
 transformer_dropout = 0.1
 transformer_forward_scale = 4
-transformer_out_dim = (1+n_obs_back)*enc_out_dim
+transformer_out_dim = enc_out_dim
 obs_mask = torch.triu(torch.ones(n_obs_back+1,n_obs_back+1)).cuda()
 
 ## Augmentation params
